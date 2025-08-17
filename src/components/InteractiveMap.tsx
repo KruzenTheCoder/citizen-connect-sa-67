@@ -37,32 +37,23 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
   const [mapboxToken, setMapboxToken] = useState('')
   const [showTokenPrompt, setShowTokenPrompt] = useState(true)
 
-  // Fetch token from Supabase edge function
+  // Auto-load your Mapbox token
   useEffect(() => {
-    const fetchMapboxToken = async () => {
-      try {
-        const response = await fetch('/functions/v1/get-mapbox-token')
-        if (response.ok) {
-          const data = await response.json()
-          if (data.token?.startsWith('pk.')) {
-            setMapboxToken(data.token)
-            setShowTokenPrompt(false)
-            return
-          }
-        }
-      } catch (error) {
-        console.log('Could not fetch token from edge function, checking localStorage')
-      }
-      
-      // Fallback to localStorage
-      const savedToken = localStorage.getItem('MAPBOX_TOKEN') || ''
-      if (savedToken?.startsWith('pk.')) {
-        setMapboxToken(savedToken)
-        setShowTokenPrompt(false)
-      }
+    // Your provided token
+    const userToken = 'pk.eyJ1Ijoia3J1emVuMjIiLCJhIjoiY21lZmo2NWxtMHFhaTJrc2ZpbGc4dzZ0NCJ9.4wAZRxTVo6jHK4_JtfV2MA'
+    
+    if (userToken?.startsWith('pk.')) {
+      setMapboxToken(userToken)
+      setShowTokenPrompt(false)
+      return
     }
     
-    fetchMapboxToken()
+    // Fallback to localStorage if needed
+    const savedToken = localStorage.getItem('MAPBOX_TOKEN') || ''
+    if (savedToken?.startsWith('pk.')) {
+      setMapboxToken(savedToken)
+      setShowTokenPrompt(false)
+    }
   }, [])
 
   const createMap = () => {
