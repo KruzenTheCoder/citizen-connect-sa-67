@@ -280,7 +280,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      promote_to_super_admin: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
+      setup_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       incident_priority: "low" | "medium" | "high" | "critical"
