@@ -10,7 +10,7 @@ import { DistrictManagement } from "@/components/admin/DistrictManagement";
 import { NotificationManagement } from "@/components/admin/NotificationManagement";
 import { MunicipalitySettings } from "@/components/admin/MunicipalitySettings";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ArrowLeft, Home } from "lucide-react";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -53,11 +53,22 @@ const AdminPanel = () => {
           <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">Municipal Administration</h1>
-                <p className="text-sm text-muted-foreground">
-                  {profile.role === 'super_admin' ? 'Super Administrator' : 'Municipality Admin'}
-                </p>
+              <div className="flex items-center gap-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/'}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Button>
+                <div>
+                  <h1 className="text-xl font-semibold text-foreground">Municipal Administration</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {profile.role === 'super_admin' ? 'Super Administrator' : 'Municipality Admin'}
+                  </p>
+                </div>
               </div>
             </div>
             

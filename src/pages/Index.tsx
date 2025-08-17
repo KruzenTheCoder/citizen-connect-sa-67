@@ -9,7 +9,7 @@ import NotificationsPanel from "@/components/NotificationsPanel";
 import VoiceReporting from "@/components/VoiceReporting";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -42,9 +42,27 @@ const Index = () => {
       case "municipalities":
         return <MunicipalitiesList />;
       case "admin":
-        // Redirect to dedicated admin panel
-        window.location.href = '/admin';
-        return null;
+        // For municipality admins, show a card with link to admin panel
+        return userRole === "municipality" ? (
+          <div className="p-6 flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4 max-w-md">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <Settings className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Municipal Administration</h2>
+              <p className="text-muted-foreground">
+                Access the full administrative panel to manage incidents, users, districts, and more.
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/admin'}
+                className="w-full"
+                size="lg"
+              >
+                Open Admin Panel
+              </Button>
+            </div>
+          </div>
+        ) : <MapView />;
       default:
         return <MapView />;
     }
