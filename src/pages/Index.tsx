@@ -42,12 +42,9 @@ const Index = () => {
       case "municipalities":
         return <MunicipalitiesList />;
       case "admin":
-        return userRole === "municipality" ? (
-          <div className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
-            <p className="text-muted-foreground">Municipal administration tools</p>
-          </div>
-        ) : <MapView />;
+        // Redirect to dedicated admin panel
+        window.location.href = '/admin';
+        return null;
       default:
         return <MapView />;
     }
