@@ -98,29 +98,22 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
         // Fetch real district boundaries from Supabase
         const { data: districts, error } = await supabase
           .from('districts')
-          .select(`
-            id,
-            name,
-            code,
-            boundary_geojson,
-            municipalities(name)
-          `)
+          .select('id, name, code, boundary_geojson, municipality_id')
 
         if (error) {
           console.error('Error fetching districts:', error)
           return
         }
 
-        const features = districts?.map(district => ({
+        const features = districts?.map((district: any) => ({
           type: 'Feature' as const,
           properties: {
             id: district.id,
             name: district.name,
-            code: district.code,
-            municipality: district.municipalities?.name || 'Unknown Municipality'
+            code: district.code
           },
           geometry: district.boundary_geojson as any
-        })).filter(f => f.geometry) || []
+        })).filter((f: any) => f.geometry) || []
 
         mapRef.current.addSource('districts', {
           type: 'geojson',
@@ -156,13 +149,12 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
       // Add click handler for districts
       mapRef.current.on('click', 'district-fills', (e) => {
         if (e.features && e.features[0]) {
-          const { name, code, municipality } = e.features[0].properties || {}
+          const { name, code } = e.features[0].properties || {}
           new mapboxgl.Popup()
             .setLngLat(e.lngLat)
             .setHTML(`
               <div class="p-3">
                 <h3 class="font-semibold text-sm text-gray-900">${name}</h3>
-                <p class="text-xs text-gray-600 mt-1">${municipality}</p>
                 <p class="text-xs text-gray-500 mt-1">District Code: ${code}</p>
               </div>
             `)
