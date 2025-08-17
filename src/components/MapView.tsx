@@ -148,7 +148,7 @@ export const MapView = () => {
       />
 
       {/* Map Controls Overlay */}
-      <div className="absolute top-4 left-4 space-y-2 z-10">
+      <div className="absolute top-20 left-4 space-y-2 z-10">
         {/* Location Status */}
         {municipality && (
           <Card className="p-3 bg-background/90 backdrop-blur-sm">
