@@ -42,25 +42,15 @@ const Index = () => {
       case "municipalities":
         return <MunicipalitiesList />;
       case "admin":
-        // For municipality admins, show a card with link to admin panel
+        // Embed the full Admin Panel directly in the app to avoid external routing
         return userRole === "municipality" ? (
-          <div className="p-6 flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4 max-w-md">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <Settings className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">Municipal Administration</h2>
-              <p className="text-muted-foreground">
-                Access the full administrative panel to manage incidents, users, districts, and more.
-              </p>
-              <Button 
-                onClick={() => window.location.href = '/admin'}
-                className="w-full"
-                size="lg"
-              >
-                Open Admin Panel
-              </Button>
-            </div>
+          <div className="flex-1">
+            {/* Embedded Admin Panel */}
+            {/* eslint-disable-next-line @typescript-eslint/no-var-requires */}
+            {(() => {
+              const AdminPanel = require("./AdminPanel").default;
+              return <AdminPanel />;
+            })()}
           </div>
         ) : <MapView />;
       default:
