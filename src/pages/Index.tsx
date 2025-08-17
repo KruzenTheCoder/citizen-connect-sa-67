@@ -5,18 +5,22 @@ import { MapView } from "@/components/MapView";
 import { Dashboard } from "@/components/Dashboard";
 import { ReportForm } from "@/components/ReportForm";
 import MunicipalitiesList from "@/components/MunicipalitiesList";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
-  const [userRole, setUserRole] = useState<"citizen" | "municipality">("citizen");
   const [isReportFormOpen, setIsReportFormOpen] = useState(false);
+  const { profile, signOut } = useAuth();
+
+  // Determine user role from profile
+  const userRole = profile?.role === 'municipality_admin' ? 'municipality' : 'citizen';
 
   const handleRoleToggle = () => {
-    setUserRole(prev => prev === "citizen" ? "municipality" : "citizen");
-    // Switch to appropriate tab based on role
-    if (userRole === "citizen" && activeTab === "dashboard") {
-      setActiveTab("map");
-    }
+    // For now, we don't allow manual role switching since it's based on actual user role
+    return;
   };
 
   const renderContent = () => {
@@ -48,6 +52,26 @@ const Index = () => {
         onRoleToggle={handleRoleToggle}
         onNewReport={() => setIsReportFormOpen(true)}
       />
+      
+      {/* User Profile Bar */}
+      <div className="bg-card border-b border-border/30 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <User className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{profile?.full_name || profile?.email}</span>
+          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+            {profile?.role === 'municipality_admin' ? 'Municipality Admin' : 'Citizen'}
+          </span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={signOut}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
+      </div>
       
       <main className="flex-1 flex">
         {renderContent()}
