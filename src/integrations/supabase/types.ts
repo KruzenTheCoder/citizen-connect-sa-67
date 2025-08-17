@@ -47,6 +47,13 @@ export type Database = {
             foreignKeyName: "districts_municipality_id_fkey"
             columns: ["municipality_id"]
             isOneToOne: false
+            referencedRelation: "incident_analytics"
+            referencedColumns: ["municipality_id"]
+          },
+          {
+            foreignKeyName: "districts_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
             referencedRelation: "municipalities"
             referencedColumns: ["id"]
           },
@@ -177,6 +184,13 @@ export type Database = {
             foreignKeyName: "incidents_municipality_id_fkey"
             columns: ["municipality_id"]
             isOneToOne: false
+            referencedRelation: "incident_analytics"
+            referencedColumns: ["municipality_id"]
+          },
+          {
+            foreignKeyName: "incidents_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
             referencedRelation: "municipalities"
             referencedColumns: ["id"]
           },
@@ -225,6 +239,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          incident_id: string | null
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incident_id?: string | null
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incident_id?: string | null
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -270,6 +335,13 @@ export type Database = {
             foreignKeyName: "profiles_municipality_id_fkey"
             columns: ["municipality_id"]
             isOneToOne: false
+            referencedRelation: "incident_analytics"
+            referencedColumns: ["municipality_id"]
+          },
+          {
+            foreignKeyName: "profiles_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
             referencedRelation: "municipalities"
             referencedColumns: ["id"]
           },
@@ -277,7 +349,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      incident_analytics: {
+        Row: {
+          avg_resolution_hours: number | null
+          closed_count: number | null
+          critical_count: number | null
+          high_priority_count: number | null
+          in_progress_count: number | null
+          incident_date: string | null
+          incident_type: Database["public"]["Enums"]["incident_type"] | null
+          municipality_id: string | null
+          municipality_name: string | null
+          pending_count: number | null
+          resolved_count: number | null
+          total_incidents: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       promote_to_super_admin: {
