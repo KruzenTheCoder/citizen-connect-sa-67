@@ -240,10 +240,18 @@ const Auth = () => {
             </div>
 
             {/* Municipality Admin Note */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border/30">
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border/30 space-y-2">
               <p className="text-xs text-muted-foreground text-center">
-                <strong>Municipality Admins:</strong> Contact your system administrator for verified access credentials.
+                <strong>Municipality Admins:</strong> Use the test admin portal below.
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin-auth')}
+                className="w-full"
+              >
+                Test Admin Portal
+              </Button>
             </div>
           </CardContent>
         </Card>

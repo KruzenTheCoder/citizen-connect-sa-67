@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MapPin } from 'lucide-react'
+import { supabase } from '@/integrations/supabase/client'
 
 interface InteractiveMapProps {
   incidents: any[]
@@ -88,50 +89,46 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
   }, [])
 
   // Add district boundaries to map
-  const addDistrictBoundaries = () => {
+  const addDistrictBoundaries = async () => {
     if (!mapRef.current || !mapLoaded) return
 
     // Add district boundaries layer if not already added
     if (!mapRef.current.getSource('districts')) {
-      mapRef.current.addSource('districts', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: [
-            // Sample district boundaries for demonstration
-            {
-              type: 'Feature',
-              properties: { name: 'City of Johannesburg', province: 'Gauteng' },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [[
-                  [27.8, -26.1], [28.2, -26.1], [28.2, -26.4], [27.8, -26.4], [27.8, -26.1]
-                ]]
-              }
-            },
-            {
-              type: 'Feature',
-              properties: { name: 'City of Cape Town', province: 'Western Cape' },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [[
-                  [18.3, -33.7], [18.7, -33.7], [18.7, -34.0], [18.3, -34.0], [18.3, -33.7]
-                ]]
-              }
-            },
-            {
-              type: 'Feature',
-              properties: { name: 'eThekwini', province: 'KwaZulu-Natal' },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [[
-                  [30.7, -29.6], [31.1, -29.6], [31.1, -29.9], [30.7, -29.9], [30.7, -29.6]
-                ]]
-              }
-            }
-          ]
+      try {
+        // Fetch real district boundaries from Supabase
+        const { data: districts, error } = await supabase
+          .from('districts')
+          .select(`
+            id,
+            name,
+            code,
+            boundary_geojson,
+            municipalities(name)
+          `)
+
+        if (error) {
+          console.error('Error fetching districts:', error)
+          return
         }
-      })
+
+        const features = districts?.map(district => ({
+          type: 'Feature' as const,
+          properties: {
+            id: district.id,
+            name: district.name,
+            code: district.code,
+            municipality: district.municipalities?.name || 'Unknown Municipality'
+          },
+          geometry: district.boundary_geojson as any
+        })).filter(f => f.geometry) || []
+
+        mapRef.current.addSource('districts', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features
+          }
+        })
 
       // Add fill layer for districts
       mapRef.current.addLayer({
@@ -159,29 +156,50 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
       // Add click handler for districts
       mapRef.current.on('click', 'district-fills', (e) => {
         if (e.features && e.features[0]) {
-          const { name, province } = e.features[0].properties || {}
+          const { name, code, municipality } = e.features[0].properties || {}
           new mapboxgl.Popup()
             .setLngLat(e.lngLat)
             .setHTML(`
               <div class="p-3">
                 <h3 class="font-semibold text-sm text-gray-900">${name}</h3>
-                <p class="text-xs text-gray-600 mt-1">${province}</p>
-                <p class="text-xs text-gray-500 mt-1">District Municipality</p>
+                <p class="text-xs text-gray-600 mt-1">${municipality}</p>
+                <p class="text-xs text-gray-500 mt-1">District Code: ${code}</p>
               </div>
             `)
             .addTo(mapRef.current!)
         }
       })
-
-      // Change cursor on hover
-      mapRef.current.on('mouseenter', 'district-fills', () => {
-        mapRef.current!.getCanvas().style.cursor = 'pointer'
-      })
-
-      mapRef.current.on('mouseleave', 'district-fills', () => {
-        mapRef.current!.getCanvas().style.cursor = ''
-      })
+      } catch (error) {
+        console.error('Error setting up district boundaries:', error)
+      }
     }
+  }
+
+  // Change cursor on hover for districts
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+
+    const map = mapRef.current
+    
+    const handleMouseEnter = () => {
+      map.getCanvas().style.cursor = 'pointer'
+    }
+
+    const handleMouseLeave = () => {
+      map.getCanvas().style.cursor = ''
+    }
+
+    // Add hover handlers
+    map.on('mouseenter', 'district-fills', handleMouseEnter)
+    map.on('mouseleave', 'district-fills', handleMouseLeave)
+
+    return () => {
+      map.off('mouseenter', 'district-fills', handleMouseEnter)
+      map.off('mouseleave', 'district-fills', handleMouseLeave)
+    }
+  }, [mapLoaded])
+
+  const setupDistrictHoverEffects = () => {
   }
 
   // Update markers when data changes
