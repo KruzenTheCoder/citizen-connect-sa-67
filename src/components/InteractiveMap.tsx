@@ -87,6 +87,103 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
     }
   }, [])
 
+  // Add district boundaries to map
+  const addDistrictBoundaries = () => {
+    if (!mapRef.current || !mapLoaded) return
+
+    // Add district boundaries layer if not already added
+    if (!mapRef.current.getSource('districts')) {
+      mapRef.current.addSource('districts', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [
+            // Sample district boundaries for demonstration
+            {
+              type: 'Feature',
+              properties: { name: 'City of Johannesburg', province: 'Gauteng' },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [27.8, -26.1], [28.2, -26.1], [28.2, -26.4], [27.8, -26.4], [27.8, -26.1]
+                ]]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: { name: 'City of Cape Town', province: 'Western Cape' },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [18.3, -33.7], [18.7, -33.7], [18.7, -34.0], [18.3, -34.0], [18.3, -33.7]
+                ]]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: { name: 'eThekwini', province: 'KwaZulu-Natal' },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [30.7, -29.6], [31.1, -29.6], [31.1, -29.9], [30.7, -29.9], [30.7, -29.6]
+                ]]
+              }
+            }
+          ]
+        }
+      })
+
+      // Add fill layer for districts
+      mapRef.current.addLayer({
+        id: 'district-fills',
+        type: 'fill',
+        source: 'districts',
+        paint: {
+          'fill-color': '#627BC1',
+          'fill-opacity': 0.1
+        }
+      })
+
+      // Add border layer for districts
+      mapRef.current.addLayer({
+        id: 'district-borders',
+        type: 'line',
+        source: 'districts',
+        paint: {
+          'line-color': '#627BC1',
+          'line-width': 2,
+          'line-opacity': 0.7
+        }
+      })
+
+      // Add click handler for districts
+      mapRef.current.on('click', 'district-fills', (e) => {
+        if (e.features && e.features[0]) {
+          const { name, province } = e.features[0].properties || {}
+          new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div class="p-3">
+                <h3 class="font-semibold text-sm text-gray-900">${name}</h3>
+                <p class="text-xs text-gray-600 mt-1">${province}</p>
+                <p class="text-xs text-gray-500 mt-1">District Municipality</p>
+              </div>
+            `)
+            .addTo(mapRef.current!)
+        }
+      })
+
+      // Change cursor on hover
+      mapRef.current.on('mouseenter', 'district-fills', () => {
+        mapRef.current!.getCanvas().style.cursor = 'pointer'
+      })
+
+      mapRef.current.on('mouseleave', 'district-fills', () => {
+        mapRef.current!.getCanvas().style.cursor = ''
+      })
+    }
+  }
+
   // Update markers when data changes
   const refreshMarkers = () => {
     if (!mapRef.current) return
@@ -99,26 +196,42 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
     if (userLocation) {
       const userMarker = new mapboxgl.Marker({ color: '#ff6b35' })
         .setLngLat([userLocation.longitude, userLocation.latitude])
-        .setPopup(new mapboxgl.Popup().setHTML('<div class="text-sm font-medium">Your Location</div>'))
+        .setPopup(new mapboxgl.Popup().setHTML('<div class="p-2"><div class="text-sm font-medium text-gray-900">Your Location</div></div>'))
         .addTo(mapRef.current)
       markersRef.current.push(userMarker)
     }
 
-    // Incident markers (demo coordinates within SA)
-    incidents.forEach((incident) => {
-      const lng = 18 + Math.random() * 14
-      const lat = -35 + Math.random() * 13
+    // Incident markers with realistic coordinates
+    incidents.forEach((incident, index) => {
+      // Use more realistic coordinates based on incident location
+      let lng, lat
+      if (incident.location?.includes('Johannesburg') || incident.municipality?.includes('Johannesburg')) {
+        lng = 28.0 + (Math.random() - 0.5) * 0.4
+        lat = -26.2 + (Math.random() - 0.5) * 0.4
+      } else if (incident.location?.includes('Cape Town') || incident.municipality?.includes('Cape Town')) {
+        lng = 18.5 + (Math.random() - 0.5) * 0.4
+        lat = -33.8 + (Math.random() - 0.5) * 0.4
+      } else if (incident.location?.includes('Durban') || incident.municipality?.includes('eThekwini')) {
+        lng = 30.9 + (Math.random() - 0.5) * 0.4
+        lat = -29.8 + (Math.random() - 0.5) * 0.4
+      } else {
+        // Default random coordinates within SA
+        lng = 18 + Math.random() * 14
+        lat = -35 + Math.random() * 13
+      }
+
       const marker = new mapboxgl.Marker({ color: getIncidentColor(incident.type) })
         .setLngLat([lng, lat])
         .setPopup(
           new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div class="p-2">
-              <h3 class="font-semibold text-sm">${incident.location}</h3>
-              <p class="text-xs text-gray-600 mt-1">${incident.description}</p>
+            <div class="p-3">
+              <h3 class="font-semibold text-sm text-gray-900">${incident.location || 'Unknown Location'}</h3>
+              <p class="text-xs text-gray-600 mt-1">${incident.description || 'No description available'}</p>
               <div class="flex items-center justify-between mt-2">
-                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Severity ${incident.severity}</span>
-                <span class="text-xs text-gray-500">${incident.affectedCount} affected</span>
+                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Severity ${incident.severity || 'N/A'}</span>
+                <span class="text-xs text-gray-500">${incident.affectedCount || 0} affected</span>
               </div>
+              <div class="text-xs text-gray-500 mt-1">ETA: ${incident.eta || 'Unknown'}</div>
             </div>
           `),
         )
@@ -130,6 +243,7 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
 
   useEffect(() => {
     if (!mapLoaded) return
+    addDistrictBoundaries()
     refreshMarkers()
   }, [mapLoaded, incidents, userLocation])
 
