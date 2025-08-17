@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.setup_admin_user();

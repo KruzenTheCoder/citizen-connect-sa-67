@@ -30,68 +30,33 @@ const AdminAuth = () => {
     setError('');
 
     try {
-      // First try to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // First try to sign in normally
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        // If sign in fails, try to sign up the admin user
+        // If sign in fails, call our edge function to set up the admin user
         if (signInError.message.includes('Invalid login credentials')) {
-          console.log('User not found, attempting signup...');
+          console.log('Admin user not found, setting up admin account...');
           
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/`,
-              data: {
-                full_name: 'Johannesburg Municipality Admin',
-                role: 'municipality_admin'
-              }
-            }
+          const { error: setupError } = await supabase.functions.invoke('setup-admin', {
+            body: { email, password }
           });
 
-          if (signUpError) {
-            console.error('Signup error:', signUpError);
-            throw signUpError;
+          if (setupError) {
+            throw setupError;
           }
 
-          console.log('Signup successful:', signUpData);
+          // Now try to sign in again
+          const { error: retrySignInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-          // If we need to confirm email, show message
-          if (signUpData.user && !signUpData.session) {
-            setError('Please check your email to confirm your account before signing in.');
-            return;
-          }
-
-          // If signup was successful and we have a session, update profile
-          if (signUpData.user && signUpData.session) {
-            console.log('Updating profile for new user...');
-            
-            // Get the Johannesburg municipality ID
-            const { data: municipality } = await supabase
-              .from('municipalities')
-              .select('id')
-              .eq('code', 'JHB')
-              .single();
-
-            // Update the profile
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                role: 'municipality_admin',
-                is_verified: true,
-                municipality_id: municipality?.id
-              })
-              .eq('id', signUpData.user.id);
-
-            if (updateError) {
-              console.error('Error updating profile:', updateError);
-            } else {
-              console.log('Profile updated successfully');
-            }
+          if (retrySignInError) {
+            throw retrySignInError;
           }
 
           toast.success('Admin account created and logged in successfully!');

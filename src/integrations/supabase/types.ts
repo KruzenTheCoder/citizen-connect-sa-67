@@ -372,10 +372,6 @@ export type Database = {
         Args: { user_email: string }
         Returns: undefined
       }
-      setup_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       setup_super_admin: {
         Args: Record<PropertyKey, never>
         Returns: undefined
