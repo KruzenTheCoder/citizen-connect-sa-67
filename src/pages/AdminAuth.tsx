@@ -39,6 +39,8 @@ const AdminAuth = () => {
       if (signInError) {
         // If sign in fails, try to sign up the admin user
         if (signInError.message.includes('Invalid login credentials')) {
+          console.log('User not found, attempting signup...');
+          
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
@@ -52,27 +54,43 @@ const AdminAuth = () => {
           });
 
           if (signUpError) {
+            console.error('Signup error:', signUpError);
             throw signUpError;
           }
 
+          console.log('Signup successful:', signUpData);
+
+          // If we need to confirm email, show message
           if (signUpData.user && !signUpData.session) {
             setError('Please check your email to confirm your account before signing in.');
             return;
           }
 
-          // Update the profile to municipality admin after signup
-          if (signUpData.user) {
+          // If signup was successful and we have a session, update profile
+          if (signUpData.user && signUpData.session) {
+            console.log('Updating profile for new user...');
+            
+            // Get the Johannesburg municipality ID
+            const { data: municipality } = await supabase
+              .from('municipalities')
+              .select('id')
+              .eq('code', 'JHB')
+              .single();
+
+            // Update the profile
             const { error: updateError } = await supabase
               .from('profiles')
               .update({
                 role: 'municipality_admin',
                 is_verified: true,
-                municipality_id: (await supabase.from('municipalities').select('id').eq('code', 'JHB').single()).data?.id
+                municipality_id: municipality?.id
               })
               .eq('id', signUpData.user.id);
 
             if (updateError) {
               console.error('Error updating profile:', updateError);
+            } else {
+              console.log('Profile updated successfully');
             }
           }
 
@@ -86,6 +104,7 @@ const AdminAuth = () => {
 
       navigate('/');
     } catch (err: any) {
+      console.error('Authentication error:', err);
       setError(err.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
