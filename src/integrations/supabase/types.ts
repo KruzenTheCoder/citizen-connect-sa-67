@@ -14,7 +14,267 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      districts: {
+        Row: {
+          boundary_geojson: Json | null
+          code: string
+          created_at: string
+          id: string
+          municipality_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          boundary_geojson?: Json | null
+          code: string
+          created_at?: string
+          id?: string
+          municipality_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          boundary_geojson?: Json | null
+          code?: string
+          created_at?: string
+          id?: string
+          municipality_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
+            referencedRelation: "municipalities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_updates: {
+        Row: {
+          created_at: string
+          eta_update: string | null
+          id: string
+          incident_id: string
+          message: string
+          status: Database["public"]["Enums"]["incident_status"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          eta_update?: string | null
+          id?: string
+          incident_id: string
+          message: string
+          status?: Database["public"]["Enums"]["incident_status"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          eta_update?: string | null
+          id?: string
+          incident_id?: string
+          message?: string
+          status?: Database["public"]["Enums"]["incident_status"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_updates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string
+          district_id: string | null
+          estimated_resolution_time: string | null
+          id: string
+          images: string[] | null
+          incident_type: Database["public"]["Enums"]["incident_type"]
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
+          municipality_id: string
+          priority: Database["public"]["Enums"]["incident_priority"]
+          reporter_id: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          district_id?: string | null
+          estimated_resolution_time?: string | null
+          id?: string
+          images?: string[] | null
+          incident_type: Database["public"]["Enums"]["incident_type"]
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          municipality_id: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reporter_id: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          district_id?: string | null
+          estimated_resolution_time?: string | null
+          id?: string
+          images?: string[] | null
+          incident_type?: Database["public"]["Enums"]["incident_type"]
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          municipality_id?: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reporter_id?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
+            referencedRelation: "municipalities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      municipalities: {
+        Row: {
+          boundary_geojson: Json | null
+          code: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          boundary_geojson?: Json | null
+          code: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          boundary_geojson?: Json | null
+          code?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          is_verified: boolean
+          municipality_id: string | null
+          notification_preferences: Json | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_verified?: boolean
+          municipality_id?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_verified?: boolean
+          municipality_id?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_municipality_id_fkey"
+            columns: ["municipality_id"]
+            isOneToOne: false
+            referencedRelation: "municipalities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +283,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      incident_priority: "low" | "medium" | "high" | "critical"
+      incident_status: "pending" | "in_progress" | "resolved" | "closed"
+      incident_type: "water" | "electricity" | "roads" | "waste" | "other"
+      user_role: "citizen" | "municipality_admin" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +413,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      incident_priority: ["low", "medium", "high", "critical"],
+      incident_status: ["pending", "in_progress", "resolved", "closed"],
+      incident_type: ["water", "electricity", "roads", "waste", "other"],
+      user_role: ["citizen", "municipality_admin", "super_admin"],
+    },
   },
 } as const
