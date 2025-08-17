@@ -37,16 +37,32 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
   const [mapboxToken, setMapboxToken] = useState('')
   const [showTokenPrompt, setShowTokenPrompt] = useState(true)
 
-  // Prefill token from .env or localStorage
+  // Fetch token from Supabase edge function
   useEffect(() => {
-    const envToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined) || ''
-    const savedToken = localStorage.getItem('MAPBOX_TOKEN') || ''
-    const token =
-      envToken?.startsWith('pk.') ? envToken : savedToken?.startsWith('pk.') ? savedToken : ''
-    if (token) {
-      setMapboxToken(token)
-      setShowTokenPrompt(false)
+    const fetchMapboxToken = async () => {
+      try {
+        const response = await fetch('/functions/v1/get-mapbox-token')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.token?.startsWith('pk.')) {
+            setMapboxToken(data.token)
+            setShowTokenPrompt(false)
+            return
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch token from edge function, checking localStorage')
+      }
+      
+      // Fallback to localStorage
+      const savedToken = localStorage.getItem('MAPBOX_TOKEN') || ''
+      if (savedToken?.startsWith('pk.')) {
+        setMapboxToken(savedToken)
+        setShowTokenPrompt(false)
+      }
     }
+    
+    fetchMapboxToken()
   }, [])
 
   const createMap = () => {

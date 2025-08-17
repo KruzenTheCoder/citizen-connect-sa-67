@@ -42,6 +42,7 @@ export const useGeolocation = () => {
       "KwaZulu-Natal": ["Amajuba", "Harry Gwala", "iLembe", "King Cetshwayo", "Ugu", "uMgungundlovu", "uMkhanyakude", "uMzinyathi", "uThukela", "Zululand"],
       "Limpopo": ["Capricorn", "Mopani", "Sekhukhune", "Vhembe", "Waterberg"],
       "Mpumalanga": ["Ehlanzeni", "Gert Sibande", "Nkangala"],
+      "North West": ["Bojanala Platinum", "Dr Kenneth Kaunda", "Dr Ruth Segomotsi Mompati", "Ngaka Modiri Molema"],
       "Northern Cape": ["Frances Baard", "John Taolo Gaetsewe", "Namakwa", "Pixley ka Seme", "ZF Mgcawu"],
       "Western Cape": ["Cape Winelands", "Central Karoo", "Garden Route", "Overberg", "West Coast"]
     }
