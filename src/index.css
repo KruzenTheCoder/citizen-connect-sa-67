@@ -62,19 +62,12 @@
     --transition-fast: all 0.15s ease-out;
 
     --sidebar-background: 222 15% 8%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -106,6 +99,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -118,77 +112,47 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
-  body {
-    @apply bg-background text-foreground;
-  }
+  body { @apply bg-background text-foreground; }
 }
-/* ===== Mobile Hot-Fix (forces safe stacking on small screens) ===== */
-@media (max-width: 768px) {
-  html, body, #root {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
 
-  /* Stop side-by-side layouts from cramping on phones */
-  .flex {
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    gap: 0.75rem !important;
-  }
+/* ===== Safe Mobile Globals ===== */
+html, body, #root {
+  height: 100%;
+}
 
-  /* Any grid becomes a single column on mobile */
-  .grid,
-  [class*="grid-cols-"] {
-    grid-template-columns: 1fr !important;
-    gap: 0.75rem !important;
-  }
+body {
+  min-height: 100dvh; /* dynamic viewport height for mobile address bar */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  /* Make “half/third/quarter width” blocks full width on mobile */
-  [class*="w-1/2"],
-  [class*="w-2/3"],
-  [class*="w-1/3"],
-  [class*="w-1/4"],
-  [class*="w-3/4"] {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
 
-  /* Kill fixed heights that cause overlap; let content grow */
-  [class*="h-["] {
-    height: auto !important; /* catches classes like h-[500px] */
-  }
+.page {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  min-height: 100dvh;
+}
 
-  /* Common culprits for overlap on mobile (hero layers, maps, badges) */
-  [class*="absolute"],
-  [class*="fixed"],
-  [class*="sticky"] {
-    position: static !important;
-  }
+/* Media defaults */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
-  /* Images/media should never overflow */
-  img, video, canvas, svg {
-    max-width: 100% !important;
-    height: auto !important;
-    display: block;
-  }
-
-  /* Prevent children from stretching layout */
-  *, *::before, *::after {
-    min-width: 0;
-    min-height: 0;
-    box-sizing: border-box;
-  }
-
-  /* Typography + spacing tame-down for phones (optional, safe) */
-  .prose, .card, section, article, aside, header, footer {
-    padding: 0.75rem !important;
-  }
-  body, #root {
-    text-align: left !important;
+/* Optional stacking for very small screens */
+@media (max-width: 640px) {
+  /* Add "stack-on-mobile" class to containers that should stack vertically */
+  .stack-on-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 }
