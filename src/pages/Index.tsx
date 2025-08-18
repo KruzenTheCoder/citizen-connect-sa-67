@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { Navigation } from "@/components/Navigation";
 import { MapView } from "@/components/MapView";
 import { Dashboard } from "@/components/Dashboard";
@@ -11,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Lazily load the AdminPanel component to enable code-splitting
+const AdminPanel = lazy(() => import("./AdminPanel"));
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
@@ -26,11 +28,12 @@ const Index = () => {
     return;
   };
 
-  const handleVoiceReportData = (data: any) => {
+  const handleVoiceReportData = (data) => {
     // Close voice reporting and open regular form with pre-filled data
     setIsVoiceReportOpen(false);
     setIsReportFormOpen(true);
     // TODO: Pass data to ReportForm component
+    console.log("Voice reporting data received:", data);
   };
 
   const renderContent = () => {
@@ -42,16 +45,11 @@ const Index = () => {
       case "municipalities":
         return <MunicipalitiesList />;
       case "admin":
-        // Embed the full Admin Panel directly in the app to avoid external routing
+        // Use React.Suspense to handle the loading state of the lazy component
         return userRole === "municipality" ? (
-          <div className="flex-1">
-            {/* Embedded Admin Panel */}
-            {/* eslint-disable-next-line @typescript-eslint/no-var-requires */}
-            {(() => {
-              const AdminPanel = require("./AdminPanel").default;
-              return <AdminPanel />;
-            })()}
-          </div>
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center text-gray-500">Loading Admin Panel...</div>}>
+            <AdminPanel />
+          </Suspense>
         ) : <MapView />;
       default:
         return <MapView />;
@@ -108,7 +106,7 @@ const Index = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="absolute -top-2 -right-2 z-10"
+              className="absolute -top-2 -right-2 z-10 text-xl font-bold"
               onClick={() => setIsVoiceReportOpen(false)}
             >
               ✕
