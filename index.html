@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Force desktop layout on mobile but scale it down safely -->
+    <meta name="viewport" content="width=1024, initial-scale=0.75, maximum-scale=1" />
+
     <link rel="icon" href="/lovable-uploads/67f2bee0-06d4-47c6-a529-162bceeefc09.png" type="image/png">
     <title>Citizen Connect SA - Municipal Service Reporting</title>
     <meta name="description" content="Report municipal service issues across South Africa. Water, electricity, and roadwork problems made easy for citizens and municipalities." />
@@ -22,5 +25,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Optional: CSS scaling for desktop layout inside mobile viewport -->
+    <style>
+      @media (max-width: 768px) {
+        #root {
+          transform: scale(0.75);
+          transform-origin: top left;
+          width: 1365px; /* 1024 / 0.75 ≈ compensate for scaling */
+        }
+      }
+    </style>
   </body>
 </html>
