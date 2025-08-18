@@ -1,11 +1,9 @@
 #root {
-  max-width: 1280px;
+  /* Use screen width instead of fixed 1280px */
+  max-width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
-
-  /* Make sure content scales on small screens */
-  width: 100%;
   box-sizing: border-box;
 }
 
@@ -14,10 +12,14 @@
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
-
-  /* Responsive logo size */
   max-width: 100%;
-  height: auto;
+  height: auto; /* scale logo for mobile */
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
 @keyframes logo-spin {
@@ -37,8 +39,6 @@
 
 .card {
   padding: 2em;
-
-  /* Prevent cards from overlapping */
   max-width: 100%;
   margin: 1rem auto;
   box-sizing: border-box;
@@ -48,19 +48,26 @@
   color: #888;
 }
 
-/* 🔑 Mobile-specific fixes */
+/* 📱 Mobile Fix */
 @media (max-width: 768px) {
   #root {
-    padding: 1rem;
-    text-align: left; /* stops weird centering overlaps */
+    padding: 0.5rem;
+    text-align: left; /* prevent overlap from centering */
   }
 
   .card {
     padding: 1rem;
+    margin: 0.5rem 0;
   }
 
   .logo {
     height: 4em;
     padding: 1rem;
+  }
+
+  /* force sections to stack vertically */
+  section, .container, .flex {
+    display: block !important;
+    width: 100% !important;
   }
 }
