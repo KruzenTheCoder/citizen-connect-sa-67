@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/integrations/supabase/client";
 import { X, MapPin, Camera, Droplets, Zap, Construction, Send } from "lucide-react";
 
 interface ReportFormProps {
@@ -17,6 +20,10 @@ interface ReportFormProps {
 
 export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
   const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const { latitude, longitude, error: locationError, municipality } = useGeolocation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState({
     type: "",
     severity: "",
@@ -24,14 +31,37 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     description: "",
     attachment: "",
     consent: false,
-    location: "Auto-detected: Johannesburg, Gauteng"
+    location: locationError ? "Location unavailable" : "Detecting location..."
   });
 
+  // Update location when geolocation data becomes available
+  useEffect(() => {
+    if (latitude && longitude) {
+      setFormData(prev => ({
+        ...prev,
+        location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}${municipality ? ` (${municipality.name})` : ''}`
+      }));
+    } else if (locationError) {
+      setFormData(prev => ({
+        ...prev,
+        location: "Location unavailable"
+      }));
+    }
+  }, [latitude, longitude, locationError, municipality]);
+
   const issueTypes = [
-    { value: "water", label: "Water Issues", icon: Droplets, color: "text-status-water" },
-    { value: "electricity", label: "Electricity", icon: Zap, color: "text-status-electricity" },
-    { value: "roadworks", label: "Roadworks", icon: Construction, color: "text-status-roadworks" },
+    { value: "water_leak", label: "Water Issues", icon: Droplets, color: "text-status-water" },
+    { value: "power_outage", label: "Electricity", icon: Zap, color: "text-status-electricity" },
+    { value: "road_maintenance", label: "Roadworks", icon: Construction, color: "text-status-roadworks" },
   ];
+
+  const severityToPriority = {
+    "1": "low",
+    "2": "low", 
+    "3": "medium",
+    "4": "high",
+    "5": "critical"
+  };
 
   const severityLevels = [
     { value: "1", label: "Minor (1)", description: "Low impact" },
@@ -41,7 +71,7 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     { value: "5", label: "Critical (5)", description: "Emergency" },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.type || !formData.severity || !formData.description || !formData.consent) {
@@ -53,13 +83,68 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
       return;
     }
 
-    // Submit logic would go here
-    toast({
-      title: "Report Submitted",
-      description: "Your incident report has been submitted successfully. You'll receive updates on its progress.",
-    });
-    
-    onClose();
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a report.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Create the incident record
+      const incidentData = {
+        reporter_id: user.id,
+        municipality_id: profile?.municipality_id || null,
+        incident_type: formData.type as any,
+        priority: severityToPriority[formData.severity as keyof typeof severityToPriority] as any,
+        status: 'pending' as any,
+        title: `${formData.type.replace('_', ' ')} - ${formData.cause || 'Issue reported'}`,
+        description: formData.description,
+        location_lat: latitude || null,
+        location_lng: longitude || null,
+        location_address: formData.location,
+        images: formData.attachment ? [formData.attachment] : null
+      };
+
+      const { error } = await supabase
+        .from('incidents')
+        .insert([incidentData]);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Report Submitted Successfully",
+        description: "Your incident report has been submitted. You'll receive updates on its progress.",
+      });
+      
+      // Reset form
+      setFormData({
+        type: "",
+        severity: "",
+        cause: "",
+        description: "",
+        attachment: "",
+        consent: false,
+        location: latitude && longitude ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}${municipality ? ` (${municipality.name})` : ''}` : "Location unavailable"
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit your report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -195,9 +280,13 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1 bg-civic-amber hover:bg-civic-amber/90 text-background">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="flex-1 bg-civic-amber hover:bg-civic-amber/90 text-background"
+              >
                 <Send className="w-4 h-4 mr-2" />
-                Submit Report
+                {isSubmitting ? "Submitting..." : "Submit Report"}
               </Button>
             </div>
           </form>

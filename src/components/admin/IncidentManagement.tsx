@@ -21,6 +21,28 @@ export function IncidentManagement() {
 
   useEffect(() => {
     fetchIncidents();
+
+    // Set up real-time subscription for new incidents
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'incidents'
+        },
+        (payload) => {
+          console.log('Real-time incident update:', payload);
+          // Refresh incidents when changes occur
+          fetchIncidents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchIncidents = async () => {
