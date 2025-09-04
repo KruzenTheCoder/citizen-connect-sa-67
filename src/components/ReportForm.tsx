@@ -50,9 +50,9 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
   }, [latitude, longitude, locationError, municipality]);
 
   const issueTypes = [
-    { value: "water_leak", label: "Water Issues", icon: Droplets, color: "text-status-water" },
-    { value: "power_outage", label: "Electricity", icon: Zap, color: "text-status-electricity" },
-    { value: "road_maintenance", label: "Roadworks", icon: Construction, color: "text-status-roadworks" },
+    { value: "water", label: "Water Issues", icon: Droplets, color: "text-status-water" },
+    { value: "electricity", label: "Electricity", icon: Zap, color: "text-status-electricity" },
+    { value: "roads", label: "Roads", icon: Construction, color: "text-status-roadworks" },
   ];
 
   const severityToPriority = {
@@ -102,7 +102,7 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
         incident_type: formData.type as any,
         priority: severityToPriority[formData.severity as keyof typeof severityToPriority] as any,
         status: 'pending' as any,
-        title: `${formData.type.replace('_', ' ')} - ${formData.cause || 'Issue reported'}`,
+        title: `${formData.type.charAt(0).toUpperCase() + formData.type.slice(1)} Issue - ${formData.cause || 'Reported by citizen'}`,
         description: formData.description,
         location_lat: latitude || null,
         location_lng: longitude || null,
