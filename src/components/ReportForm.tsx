@@ -61,7 +61,7 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     "3": "medium",
     "4": "high",
     "5": "critical"
-  };
+  } as const;
 
   const severityLevels = [
     { value: "1", label: "Minor (1)", description: "Low impact" },
@@ -70,6 +70,32 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     { value: "4", label: "High (4)", description: "Significant disruption" },
     { value: "5", label: "Critical (5)", description: "Emergency" },
   ];
+
+  const [detectedMunicipalityId, setDetectedMunicipalityId] = useState<string | null>(null);
+  const [resolvingMunicipality, setResolvingMunicipality] = useState(false);
+
+  // Try to resolve municipality_id from geolocated municipality name
+  useEffect(() => {
+    const resolveMunicipality = async () => {
+      if (!municipality?.name) return;
+      setResolvingMunicipality(true);
+      try {
+        const { data, error } = await supabase
+          .from('municipalities')
+          .select('id')
+          .eq('name', municipality.name)
+          .maybeSingle();
+        if (!error && data?.id) {
+          setDetectedMunicipalityId(data.id);
+        }
+      } catch (e) {
+        console.error('Failed to resolve municipality id:', e);
+      } finally {
+        setResolvingMunicipality(false);
+      }
+    };
+    resolveMunicipality();
+  }, [municipality]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +121,20 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     setIsSubmitting(true);
 
     try {
+      const municipalityId = profile?.municipality_id || detectedMunicipalityId;
+      if (!municipalityId) {
+        toast({
+          title: "Select Municipality",
+          description: "We couldn't detect your municipality. Please set your municipality in profile settings and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create the incident record
       const incidentData = {
         reporter_id: user.id,
-        municipality_id: profile?.municipality_id || null,
+        municipality_id: municipalityId,
         incident_type: formData.type as any,
         priority: severityToPriority[formData.severity as keyof typeof severityToPriority] as any,
         status: 'pending' as any,
