@@ -121,11 +121,23 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
     setIsSubmitting(true);
 
     try {
-      const municipalityId = profile?.municipality_id || detectedMunicipalityId;
+      let municipalityId = profile?.municipality_id || detectedMunicipalityId;
+      
+      // If no municipality detected, try to find one based on detected municipality name
+      if (!municipalityId && municipality?.name) {
+        const { data } = await supabase
+          .from('municipalities')
+          .select('id')
+          .ilike('name', `%${municipality.name}%`)
+          .limit(1)
+          .maybeSingle();
+        municipalityId = data?.id;
+      }
+      
       if (!municipalityId) {
         toast({
-          title: "Select Municipality",
-          description: "We couldn't detect your municipality. Please set your municipality in profile settings and try again.",
+          title: "Location Required",
+          description: "We couldn't detect your municipality. Please enable location access and try again, or set your municipality in profile settings.",
           variant: "destructive",
         });
         return;
@@ -248,10 +260,24 @@ export const ReportForm = ({ isOpen, onClose }: ReportFormProps) => {
               <Label className="text-sm font-medium">Location</Label>
               <div className="flex items-center space-x-2 p-3 bg-secondary rounded-lg">
                 <MapPin className="w-4 h-4 text-primary" />
-                <span className="text-sm text-foreground">{formData.location}</span>
-                <Button variant="ghost" size="sm" className="ml-auto">
-                  Adjust
-                </Button>
+                <div className="flex-1">
+                  <span className="text-sm text-foreground">{formData.location}</span>
+                  {locationError && (
+                    <p className="text-xs text-destructive mt-1">
+                      {locationError}. Please enable location access for accurate reporting.
+                    </p>
+                  )}
+                </div>
+                {!latitude && !longitude && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => window.location.reload()}
+                    className="flex-shrink-0"
+                  >
+                    Retry
+                  </Button>
+                )}
               </div>
             </div>
 

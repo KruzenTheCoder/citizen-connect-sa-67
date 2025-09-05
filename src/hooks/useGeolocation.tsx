@@ -5,6 +5,7 @@ interface GeolocationState {
   longitude: number | null;
   error: string | null;
   loading: boolean;
+  permissionRequested: boolean;
 }
 
 interface Municipality {
@@ -19,6 +20,7 @@ export const useGeolocation = () => {
     longitude: null,
     error: null,
     loading: true,
+    permissionRequested: false,
   });
 
   const [municipality, setMunicipality] = useState<Municipality | null>(null);
@@ -48,83 +50,156 @@ export const useGeolocation = () => {
     }
   };
 
-  // Simplified geolocation to municipality mapping
+  // Enhanced geolocation to municipality mapping
   const getLocationDetails = (lat: number, lng: number): Municipality => {
-    // This is a simplified approach - in a real app you'd use proper GIS data
-    // For now, we'll use rough coordinate ranges for major cities
+    // More comprehensive coordinate ranges for South African municipalities
     
-    // Cape Town area
-    if (lat >= -34.5 && lat <= -33.5 && lng >= 18.0 && lng <= 19.0) {
+    // Cape Town Metropolitan (expanded area)
+    if (lat >= -34.7 && lat <= -33.2 && lng >= 18.0 && lng <= 19.5) {
       return { name: "City of Cape Town", type: "metro", province: "Western Cape" };
     }
     
-    // Johannesburg area
-    if (lat >= -26.5 && lat <= -25.5 && lng >= 27.5 && lng <= 28.5) {
+    // Johannesburg Metropolitan (expanded area)
+    if (lat >= -26.8 && lat <= -25.8 && lng >= 27.5 && lng <= 28.8) {
       return { name: "City of Johannesburg", type: "metro", province: "Gauteng" };
     }
     
-    // Durban area
-    if (lat >= -30.0 && lat <= -29.0 && lng >= 30.5 && lng <= 31.5) {
+    // eThekwini Metropolitan (Durban - expanded area)
+    if (lat >= -30.5 && lat <= -29.3 && lng >= 30.3 && lng <= 31.3) {
       return { name: "eThekwini", type: "metro", province: "KwaZulu-Natal" };
     }
     
-    // Pretoria area
-    if (lat >= -26.0 && lat <= -25.0 && lng >= 28.0 && lng <= 29.0) {
+    // City of Tshwane (Pretoria - expanded area)
+    if (lat >= -26.3 && lat <= -25.2 && lng >= 27.8 && lng <= 28.8) {
       return { name: "City of Tshwane", type: "metro", province: "Gauteng" };
     }
     
-    // Default to a district based on rough province mapping
-    if (lat >= -35 && lng >= 18 && lng <= 25) {
+    // Nelson Mandela Bay (Port Elizabeth/Gqeberha)
+    if (lat >= -34.2 && lat <= -33.7 && lng >= 25.3 && lng <= 25.9) {
+      return { name: "Nelson Mandela Bay", type: "metro", province: "Eastern Cape" };
+    }
+    
+    // Buffalo City (East London)
+    if (lat >= -33.2 && lat <= -32.7 && lng >= 27.7 && lng <= 28.2) {
+      return { name: "Buffalo City", type: "metro", province: "Eastern Cape" };
+    }
+    
+    // Mangaung (Bloemfontein)
+    if (lat >= -29.4 && lat <= -28.9 && lng >= 26.0 && lng <= 26.5) {
+      return { name: "Mangaung", type: "metro", province: "Free State" };
+    }
+    
+    // Provincial fallbacks for better coverage
+    if (lat >= -35 && lat <= -30 && lng >= 16 && lng <= 25) {
       return { name: "Garden Route", type: "district", province: "Western Cape" };
     }
     
-    if (lat >= -27 && lng >= 27 && lng <= 29) {
-      return { name: "West Rand", type: "district", province: "Gauteng" };
+    if (lat >= -27 && lat <= -24 && lng >= 27 && lng <= 31) {
+      return { name: "Waterberg", type: "district", province: "Limpopo" };
     }
     
-    // Default fallback
-    return { name: "City of Cape Town", type: "metro", province: "Western Cape" };
+    if (lat >= -32 && lat <= -30 && lng >= 29 && lng <= 32) {
+      return { name: "King Cetshwayo", type: "district", province: "KwaZulu-Natal" };
+    }
+    
+    if (lat >= -28 && lat <= -25 && lng >= 24 && lng <= 28) {
+      return { name: "Dr Kenneth Kaunda", type: "district", province: "North West" };
+    }
+    
+    // Enhanced Gauteng coverage  
+    if (lat >= -27 && lat <= -25 && lng >= 27 && lng <= 29) {
+      return { name: "Ekurhuleni", type: "metro", province: "Gauteng" };
+    }
+    
+    // Default fallback - use a central SA municipality
+    return { name: "Mangaung", type: "metro", province: "Free State" };
   };
 
-  useEffect(() => {
+  const requestLocationPermission = async (): Promise<boolean> => {
     if (!navigator.geolocation) {
       setLocation(prev => ({
         ...prev,
-        error: "Geolocation is not supported",
+        error: "Geolocation is not supported by this browser",
         loading: false,
+        permissionRequested: true,
       }));
-      return;
+      return false;
     }
 
-    const success = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      setLocation({
-        latitude,
-        longitude,
-        error: null,
-        loading: false,
+    try {
+      // Check if permissions API is available
+      if ('permissions' in navigator) {
+        const permission = await navigator.permissions.query({ name: 'geolocation' });
+        if (permission.state === 'denied') {
+          setLocation(prev => ({
+            ...prev,
+            error: "Location access denied. Please enable location services and refresh the page.",
+            loading: false,
+            permissionRequested: true,
+          }));
+          return false;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.warn('Permissions API not available, proceeding with geolocation request');
+      return true;
+    }
+  };
+
+  useEffect(() => {
+    const initializeLocation = async () => {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
+
+      const success = (position: GeolocationPosition) => {
+        const { latitude, longitude } = position.coords;
+        setLocation({
+          latitude,
+          longitude,
+          error: null,
+          loading: false,
+          permissionRequested: true,
+        });
+        
+        const detectedMunicipality = getLocationDetails(latitude, longitude);
+        setMunicipality(detectedMunicipality);
+      };
+
+      const error = (error: GeolocationPositionError) => {
+        let errorMessage = "Unable to detect location";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied. Please enable location services.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+
+        setLocation(prev => ({
+          ...prev,
+          error: errorMessage,
+          loading: false,
+          permissionRequested: true,
+        }));
+        
+        // Don't set default municipality - let user select manually
+        setMunicipality(null);
+      };
+
+      navigator.geolocation.getCurrentPosition(success, error, {
+        enableHighAccuracy: true,
+        timeout: 15000, // Increased timeout
+        maximumAge: 60000, // Allow cached position up to 1 minute
       });
-      
-      const detectedMunicipality = getLocationDetails(latitude, longitude);
-      setMunicipality(detectedMunicipality);
     };
 
-    const error = (error: GeolocationPositionError) => {
-      setLocation(prev => ({
-        ...prev,
-        error: error.message,
-        loading: false,
-      }));
-      
-      // Set default location (Cape Town) if geolocation fails
-      setMunicipality({ name: "City of Cape Town", type: "metro", province: "Western Cape" });
-    };
-
-    navigator.geolocation.getCurrentPosition(success, error, {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
-    });
+    initializeLocation();
   }, []);
 
   return { ...location, municipality };

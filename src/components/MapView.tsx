@@ -138,73 +138,57 @@ export const MapView = () => {
     }
   }
 
-  return (
-    <div className="flex-1 flex">
+return (
+    <div className="flex-1 flex flex-col md:flex-row">
       {/* Map */}
-      <InteractiveMap
-        incidents={incidents}
-        userLocation={latitude && longitude ? { latitude, longitude } : null}
-        onIncidentClick={setSelectedIncident}
-      />
+      <div className="flex-1 relative">
+        <InteractiveMap
+          incidents={incidents}
+          userLocation={latitude && longitude ? { latitude, longitude } : null}
+          onIncidentClick={setSelectedIncident}
+        />
 
-      {/* Map Controls Overlay */}
-      <div className="absolute top-20 left-4 space-y-2 z-10">
-        {/* Location Status */}
-        {municipality && (
-          <Card className="p-3 bg-background/90 backdrop-blur-sm">
-            <div className="flex items-center space-x-2">
-              <Navigation className="w-4 h-4 text-primary" />
-              <div className="text-sm">
-                <div className="font-medium">{municipality.name}</div>
-                <div className="text-xs text-muted-foreground">{municipality.province}</div>
+        {/* Mobile-friendly Map Controls Overlay */}
+        <div className="absolute top-4 left-4 space-y-2 z-10">
+          {/* Location Status */}
+          {municipality && (
+            <Card className="p-3 bg-background/90 backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <Navigation className="w-4 h-4 text-primary" />
+                <div className="text-sm">
+                  <div className="font-medium">{municipality.name}</div>
+                  <div className="text-xs text-muted-foreground">{municipality.province}</div>
+                </div>
               </div>
+            </Card>
+          )}
+
+          {/* Filter Controls */}
+          <Card className="p-2 bg-background/90 backdrop-blur-sm">
+            <div className="flex items-center space-x-1">
+              {filters.map((filter) => {
+                const Icon = filter.icon
+                const active = selectedFilter === filter.id
+                return (
+                  <Button
+                    key={filter.id}
+                    variant={active ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedFilter(filter.id)}
+                    className="flex items-center space-x-1 min-w-[44px] min-h-[44px]"
+                  >
+                    <Icon className={`w-4 h-4 ${ (filter as any).color ? `text-${(filter as any).color}` : ''}`} />
+                    <span className="hidden sm:inline text-xs">{filter.label}</span>
+                  </Button>
+                )
+              })}
             </div>
           </Card>
-        )}
-
-        {/* Filter Controls */}
-        <Card className="p-2 bg-background/90 backdrop-blur-sm">
-          <div className="flex items-center space-x-1">
-            {filters.map((filter) => {
-              const Icon = filter.icon
-              const active = selectedFilter === filter.id
-              return (
-                <Button
-                  key={filter.id}
-                  variant={active ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setSelectedFilter(filter.id)}
-                  className="flex items-center space-x-1"
-                >
-                  <Icon className={`w-4 h-4 ${ (filter as any).color ? `text-${(filter as any).color}` : ''}`} />
-
-                  <span className="hidden sm:inline">{filter.label}</span>
-                </Button>
-              )
-            })}
-          </div>
-        </Card>
-
-        {/* View Mode Controls (placeholder) */}
-        <Card className="p-2 bg-background/90 backdrop-blur-sm">
-          <div className="flex items-center space-x-1">
-            <Layers className="w-4 h-4 text-muted-foreground mr-2" />
-            {viewModes.map((mode) => (
-              <Button
-                key={mode.id}
-                variant={viewMode === mode.id ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode(mode.id)}
-              >
-                {mode.label}
-              </Button>
-            ))}
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Incidents Sidebar */}
-      <div className="w-80 bg-card border-l border-border overflow-y-auto">
+      {/* Mobile-responsive Incidents Sidebar */}
+      <div className="md:w-80 bg-card border-t md:border-t-0 md:border-l border-border overflow-y-auto max-h-[40vh] md:max-h-none">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -215,46 +199,53 @@ export const MapView = () => {
           </div>
 
           <div className="space-y-3">
-            {incidents.map((incident) => {
-              const TypeIcon = getTypeIcon(incident.type)
-              const active = selectedIncident?.id === incident.id
-              return (
-                <Card
-                  key={incident.id}
-                  onClick={() => setSelectedIncident(incident)}
-                  className={`p-3 hover:bg-accent transition-colors cursor-pointer ${
-                    active ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className={`p-2 rounded-lg bg-secondary ${getTypeColor(incident.type)}`}>
-                      <TypeIcon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Badge variant="outline" className="text-xs">
-                          Severity {incident.severity}
-                        </Badge>
-                        {incident.eta && (
-                          <Badge variant="secondary" className="text-xs flex items-center space-x-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{incident.eta}</span>
+            {incidents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No incidents in your area</p>
+              </div>
+            ) : (
+              incidents.map((incident) => {
+                const TypeIcon = getTypeIcon(incident.type)
+                const active = selectedIncident?.id === incident.id
+                return (
+                  <Card
+                    key={incident.id}
+                    onClick={() => setSelectedIncident(incident)}
+                    className={`p-3 hover:bg-accent transition-colors cursor-pointer min-h-[60px] ${
+                      active ? 'ring-2 ring-primary' : ''
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`p-2 rounded-lg bg-secondary ${getTypeColor(incident.type)} flex-shrink-0`}>
+                        <TypeIcon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            Severity {incident.severity}
                           </Badge>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-sm text-foreground truncate">{incident.location}</h4>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {incident.description}
-                      </p>
-                      <div className="flex items-center space-x-1 mt-2 text-xs text-muted-foreground">
-                        <Users className="w-3 h-3" />
-                        <span>{incident.affectedCount} affected</span>
+                          {incident.eta && (
+                            <Badge variant="secondary" className="text-xs flex items-center space-x-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{incident.eta}</span>
+                            </Badge>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm text-foreground truncate">{incident.location}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {incident.description}
+                        </p>
+                        <div className="flex items-center space-x-1 mt-2 text-xs text-muted-foreground">
+                          <Users className="w-3 h-3" />
+                          <span>{incident.affectedCount} affected</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              )
-            })}
+                  </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </div>
