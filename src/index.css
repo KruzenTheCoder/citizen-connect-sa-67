@@ -127,6 +127,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 16px; /* Increased base font size for accessibility */
 }
 
 :root {
@@ -155,4 +156,49 @@ img, video, canvas, svg {
     flex-direction: column;
     gap: 0.75rem;
   }
+}
+
+/* Mobile-first accessibility improvements */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Safe area padding utilities for mobile */
+.safe-area-padding-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Enhanced button accessibility */
+button:not(.no-min-size), 
+.cursor-pointer {
+  min-height: 44px; /* WCAG recommended minimum touch target */
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for better UX */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
