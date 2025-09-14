@@ -148,23 +148,24 @@ export const useGeolocation = () => {
   };
 
   useEffect(() => {
+    let watchCleanup: (() => void) | undefined
     const initializeLocation = async () => {
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) return;
+      const hasPermission = await requestLocationPermission()
+      if (!hasPermission) return
 
       const success = (position: GeolocationPosition) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude } = position.coords
         setLocation({
           latitude,
           longitude,
           error: null,
           loading: false,
           permissionRequested: true,
-        });
-        
-        const detectedMunicipality = getLocationDetails(latitude, longitude);
-        setMunicipality(detectedMunicipality);
-      };
+        })
+
+        const detectedMunicipality = getLocationDetails(latitude, longitude)
+        setMunicipality(detectedMunicipality)
+      }
 
       const error = (error: GeolocationPositionError) => {
         let errorMessage = "Unable to detect location";
@@ -192,15 +193,18 @@ export const useGeolocation = () => {
         setMunicipality(null);
       };
 
-      navigator.geolocation.getCurrentPosition(success, error, {
+      const watchId = navigator.geolocation.watchPosition(success, error, {
         enableHighAccuracy: true,
         timeout: 15000, // Increased timeout
-        maximumAge: 60000, // Allow cached position up to 1 minute
-      });
-    };
+        maximumAge: 60000, // Allow cached position up to 1 minute,
+      })
 
-    initializeLocation();
-  }, []);
+      watchCleanup = () => navigator.geolocation.clearWatch(watchId)
+    }
 
-  return { ...location, municipality };
-};
+    initializeLocation()
+    return () => watchCleanup?.()
+  }, [])
+
+  return { ...location, municipality }
+}
