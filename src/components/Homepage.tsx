@@ -77,9 +77,9 @@ export const Homepage = ({ onReportIssue, onNavigate }: HomepageProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground px-4 py-8 safe-area-padding-top">
+      <div className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground px-4 pt-12 pb-8 safe-area-padding-top">
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">

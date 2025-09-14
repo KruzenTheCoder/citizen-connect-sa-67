@@ -125,9 +125,9 @@ export const MapView = () => {
   }
 
   return (
-    <div className="w-full min-h-[calc(100vh-7rem)] md:min-h-[calc(100vh-3rem)] flex flex-col md:flex-row">
+    <div className="w-full h-[calc(100vh-7rem)] md:h-[calc(100vh-2rem)] flex flex-col md:flex-row overflow-hidden">
       {/* Map */}
-      <div className="flex-1 relative min-h-[60vh] md:min-h-0">
+      <div className="flex-1 relative min-h-[60vh] md:min-h-0 md:h-full">
         <InteractiveMap
           incidents={incidents}
           userLocation={latitude && longitude ? { latitude, longitude } : null}
@@ -174,7 +174,7 @@ export const MapView = () => {
       </div>
 
       {/* Mobile-responsive Incidents Sidebar */}
-      <div className="md:w-80 bg-card border-t md:border-t-0 md:border-l border-border overflow-y-auto max-h-[40vh] md:max-h-none">
+      <div className="md:w-80 bg-card border-t md:border-t-0 md:border-l border-border overflow-y-auto max-h-[40vh] md:max-h-none md:h-full">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>

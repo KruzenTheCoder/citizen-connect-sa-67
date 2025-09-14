@@ -67,9 +67,9 @@ export const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground px-4 py-8 safe-area-padding-top">
+      <div className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground px-4 pt-12 pb-8 safe-area-padding-top">
         <div className="max-w-md mx-auto text-center">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-10 h-10" />
