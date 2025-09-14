@@ -12,7 +12,7 @@ import VoiceReporting from "@/components/VoiceReporting";
 import { useAuth } from "@/hooks/useAuth";
 
 // ✅ Use alias path for AdminPanel so bundlers (Next.js / Vite) resolve it correctly
-const AdminPanel = lazy(() => import("@/components/AdminPanel"));
+const AdminPanel = lazy(() => import("@/components/pages/AdminPanel"));
 
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("home");
