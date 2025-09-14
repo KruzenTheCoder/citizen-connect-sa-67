@@ -1,4 +1,5 @@
 // src/components/InteractiveMap.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -22,6 +23,7 @@ const getIncidentColor = (type: string) => {
       return '#3b82f6' // Blue
     case 'electricity':
       return '#f59e0b' // Amber
+    case 'roads':
     case 'roadworks':
       return '#ef4444' // Red
     default:
@@ -69,9 +71,24 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
       maxBounds: SA_BOUNDS,
       maxZoom: 15,
       minZoom: 4,
+      scrollZoom: true,
     })
     map.addControl(new mapboxgl.NavigationControl(), 'top-right')
-    map.on('load', () => setMapLoaded(true))
+
+    // Add geolocate control to prompt for user location and enable tracking
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true,
+    })
+    map.addControl(geolocate, 'top-right')
+
+    map.on('load', () => {
+      setMapLoaded(true)
+      // Automatically request location on load
+      geolocate.trigger()
+    })
+
     mapRef.current = map
   }
 
@@ -211,27 +228,31 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
       markersRef.current.push(userMarker)
     }
 
-    // Incident markers with realistic coordinates
-    incidents.forEach((incident, index) => {
-      // Use more realistic coordinates based on incident location
-      let lng, lat
-      if (incident.location?.includes('Johannesburg') || incident.municipality?.includes('Johannesburg')) {
-        lng = 28.0 + (Math.random() - 0.5) * 0.4
-        lat = -26.2 + (Math.random() - 0.5) * 0.4
-      } else if (incident.location?.includes('Cape Town') || incident.municipality?.includes('Cape Town')) {
-        lng = 18.5 + (Math.random() - 0.5) * 0.4
-        lat = -33.8 + (Math.random() - 0.5) * 0.4
-      } else if (incident.location?.includes('Durban') || incident.municipality?.includes('eThekwini')) {
-        lng = 30.9 + (Math.random() - 0.5) * 0.4
-        lat = -29.8 + (Math.random() - 0.5) * 0.4
-      } else {
-        // Default random coordinates within SA
-        lng = 18 + Math.random() * 14
-        lat = -35 + Math.random() * 13
+    // Incident markers
+    incidents.forEach((incident) => {
+      let lng = incident.coordinates?.[0]
+      let lat = incident.coordinates?.[1]
+
+      if (lng === undefined || lat === undefined) {
+        // Fallback to rough positioning based on location string
+        if (incident.location?.includes('Johannesburg') || incident.municipality?.includes('Johannesburg')) {
+          lng = 28.0 + (Math.random() - 0.5) * 0.4
+          lat = -26.2 + (Math.random() - 0.5) * 0.4
+        } else if (incident.location?.includes('Cape Town') || incident.municipality?.includes('Cape Town')) {
+          lng = 18.5 + (Math.random() - 0.5) * 0.4
+          lat = -33.8 + (Math.random() - 0.5) * 0.4
+        } else if (incident.location?.includes('Durban') || incident.municipality?.includes('eThekwini')) {
+          lng = 30.9 + (Math.random() - 0.5) * 0.4
+          lat = -29.8 + (Math.random() - 0.5) * 0.4
+        } else {
+          // Default random coordinates within SA
+          lng = 18 + Math.random() * 14
+          lat = -35 + Math.random() * 13
+        }
       }
 
       const marker = new mapboxgl.Marker({ color: getIncidentColor(incident.type) })
-        .setLngLat([lng, lat])
+        .setLngLat([lng!, lat!])
         .setPopup(
           new mapboxgl.Popup({ offset: 25 }).setHTML(`
             <div class="p-3">
@@ -239,9 +260,8 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
               <p class="text-xs text-gray-600 mt-1">${incident.description || 'No description available'}</p>
               <div class="flex items-center justify-between mt-2">
                 <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Severity ${incident.severity || 'N/A'}</span>
-                <span class="text-xs text-gray-500">${incident.affectedCount || 0} affected</span>
+                ${incident.eta ? `<span class="text-xs text-gray-500">${incident.eta}</span>` : ''}
               </div>
-              <div class="text-xs text-gray-500 mt-1">ETA: ${incident.eta || 'Unknown'}</div>
             </div>
           `),
         )

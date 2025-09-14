@@ -134,7 +134,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4 pt-8">
       <div className="w-full max-w-md">
         {/* REMOVED THE BUTTON */}
         <Card className="border-border/50 shadow-2xl">
