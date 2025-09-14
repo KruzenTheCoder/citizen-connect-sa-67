@@ -11,28 +11,28 @@ import MunicipalitiesList from "@/components/MunicipalitiesList";
 import VoiceReporting from "@/components/VoiceReporting";
 import { useAuth } from "@/hooks/useAuth";
 
-// Lazily load the AdminPanel component to enable code-splitting
-const AdminPanel = lazy(() => import("./AdminPanel"));
+// ✅ Use alias path for AdminPanel so bundlers (Next.js / Vite) resolve it correctly
+const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 
-const Index = () => {
-  const [activeTab, setActiveTab] = useState("home");
-  const [isReportFormOpen, setIsReportFormOpen] = useState(false);
-  const [isVoiceReportOpen, setIsVoiceReportOpen] = useState(false);
+const Index: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>("home");
+  const [isReportFormOpen, setIsReportFormOpen] = useState<boolean>(false);
+  const [isVoiceReportOpen, setIsVoiceReportOpen] = useState<boolean>(false);
   const { profile } = useAuth();
 
-  // Determine user role from profile
-  const userRole = profile?.role === 'municipality_admin' ? 'municipality' : 'citizen';
+  // ✅ Defensive default: if profile is null/undefined, treat as citizen
+  const userRole = profile?.role === "municipality_admin" ? "municipality" : "citizen";
 
   const handleRoleToggle = () => {
-    // For now, we don't allow manual role switching since it's based on actual user role
+    // For now, role switching is disabled (role is set by server)
     return;
   };
 
-  const handleVoiceReportData = (data) => {
+  const handleVoiceReportData = (data: unknown) => {
     // Close voice reporting and open regular form with pre-filled data
     setIsVoiceReportOpen(false);
     setIsReportFormOpen(true);
-    // TODO: Pass data to ReportForm component
+    // TODO: Pass data to ReportForm component when integration is ready
     console.log("Voice reporting data received:", data);
   };
 
@@ -40,7 +40,7 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return (
-          <Homepage 
+          <Homepage
             onReportIssue={() => setIsReportFormOpen(true)}
             onNavigate={setActiveTab}
           />
@@ -51,15 +51,24 @@ const Index = () => {
         return <CommunityPage />;
       case "services":
         return userRole === "municipality" ? (
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center text-muted-foreground">Loading Admin Panel...</div>}>
+          <Suspense
+            fallback={
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                Loading Admin Panel...
+              </div>
+            }
+          >
             <AdminPanel />
           </Suspense>
-        ) : <ServicesPage />;
+        ) : (
+          <ServicesPage />
+        );
       case "profile":
         return <ProfilePage />;
       default:
+        // Default to home if an unknown tab is set
         return (
-          <Homepage 
+          <Homepage
             onReportIssue={() => setIsReportFormOpen(true)}
             onNavigate={setActiveTab}
           />
@@ -69,14 +78,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <main className="w-full pt-4 pb-20 md:pb-0">{renderContent()}</main>
 
-      <main className="w-full pt-8 pb-20 md:pb-0">
-
-      <main className="w-full pt-4 pb-20 md:pb-0">
-
-        {renderContent()}
-      </main>
-      
       <BottomNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -88,7 +91,7 @@ const Index = () => {
         onClose={() => setIsReportFormOpen(false)}
       />
 
-      {/* Voice Reporting Modal */}
+      {/* ✅ Voice Reporting Modal */}
       {isVoiceReportOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative">
