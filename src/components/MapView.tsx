@@ -124,7 +124,7 @@ export const MapView = () => {
     }
   }
 
-return (
+  return (
     <div className="w-full min-h-[calc(100vh-7rem)] md:min-h-[calc(100vh-3rem)] flex flex-col md:flex-row">
       {/* Map */}
       <div className="flex-1 relative min-h-[60vh] md:min-h-0">
