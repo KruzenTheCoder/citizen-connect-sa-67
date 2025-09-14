@@ -68,16 +68,16 @@ const AdminAuth = () => {
       }
 
       navigate('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Authentication error:', err);
-      setError(err.message || 'An error occurred during authentication');
+      setError(err instanceof Error ? err.message : 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4 pt-8">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mx-auto">

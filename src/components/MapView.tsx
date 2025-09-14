@@ -125,7 +125,7 @@ export const MapView = () => {
   }
 
 return (
-    <div className="w-full h-[calc(100vh-4rem)] flex flex-col md:flex-row">
+    <div className="w-full h-[calc(100vh-4rem)] md:h-[calc(100vh-1rem)] flex flex-col md:flex-row">
       {/* Map */}
       <div className="flex-1 relative">
         <InteractiveMap
