@@ -69,7 +69,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="w-full">
+      <main className="w-full pb-20">
         {renderContent()}
       </main>
       

@@ -1,14 +1,16 @@
 // src/components/MapView.tsx
-import { useState, useMemo } from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Filter, Layers, MapPin, Users, Clock, Zap, Droplets, Construction, Navigation } from 'lucide-react'
+import { Filter, MapPin, Clock, Zap, Droplets, Construction, Navigation } from 'lucide-react'
 import { InteractiveMap } from './InteractiveMap'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { supabase } from '@/integrations/supabase/client'
 
 export const MapView = () => {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'water' | 'electricity' | 'roadworks'>('all')
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'water' | 'electricity' | 'roads'>('all')
   const [viewMode, setViewMode] = useState<'incidents' | 'reports' | 'alerts'>('incidents')
   const [selectedIncident, setSelectedIncident] = useState<any>(null)
 
@@ -18,7 +20,7 @@ export const MapView = () => {
     { id: 'all', label: 'All Issues', icon: Filter },
     { id: 'water', label: 'Water', icon: Droplets, color: 'status-water' },
     { id: 'electricity', label: 'Electricity', icon: Zap, color: 'status-electricity' },
-    { id: 'roadworks', label: 'Roadworks', icon: Construction, color: 'status-roadworks' },
+    { id: 'roads', label: 'Roads', icon: Construction, color: 'status-roadworks' },
   ] as const
 
   const viewModes = [
@@ -27,75 +29,59 @@ export const MapView = () => {
     { id: 'alerts', label: 'Alerts' },
   ] as const
 
-  // Mock incidents
-  const allIncidents = [
-    {
-      id: 1,
-      type: 'water',
-      severity: 4,
-      location: 'Johannesburg CBD',
-      municipality: 'City of Johannesburg',
-      province: 'Gauteng',
-      affectedCount: 23,
-      eta: '2 hours',
-      description: 'Main water pipe burst affecting multiple blocks',
-    },
-    {
-      id: 2,
-      type: 'electricity',
-      severity: 3,
-      location: 'Cape Town, Bellville',
-      municipality: 'City of Cape Town',
-      province: 'Western Cape',
-      affectedCount: 15,
-      eta: '4 hours',
-      description: 'Power outage due to equipment failure',
-    },
-    {
-      id: 3,
-      type: 'roadworks',
-      severity: 2,
-      location: 'Durban, Pinetown',
-      municipality: 'eThekwini',
-      province: 'KwaZulu-Natal',
-      affectedCount: 8,
-      eta: null,
-      description: 'Pothole repairs needed on main road',
-    },
-    {
-      id: 4,
-      type: 'water',
-      severity: 5,
-      location: 'Cape Town, Khayelitsha',
-      municipality: 'City of Cape Town',
-      province: 'Western Cape',
-      affectedCount: 45,
-      eta: '6 hours',
-      description: 'Major water supply interruption due to pipe maintenance',
-    },
-    {
-      id: 5,
-      type: 'electricity',
-      severity: 3,
-      location: 'Johannesburg, Sandton',
-      municipality: 'City of Johannesburg',
-      province: 'Gauteng',
-      affectedCount: 12,
-      eta: '3 hours',
-      description: 'Scheduled maintenance causing power outages',
-    },
-    {
-      id: 6,
-      type: 'roadworks',
-      severity: 4,
-      location: 'Pretoria, Centurion',
-      municipality: 'City of Tshwane',
-      province: 'Gauteng',
-      affectedCount: 18,
-      eta: '12 hours',
-      description: 'Major road construction affecting traffic flow',
-    },
-  ]
+  const [allIncidents, setAllIncidents] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select(
+          'id, incident_type, priority, status, title, description, location_lat, location_lng, location_address, estimated_resolution_time, municipalities(name, province)'
+        )
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        const priorityToSeverity: Record<string, number> = {
+          low: 1,
+          medium: 3,
+          high: 4,
+          critical: 5,
+        }
+
+        const transformed = data.map((i: any) => ({
+          id: i.id,
+          type: i.incident_type,
+          severity: priorityToSeverity[i.priority] ?? 1,
+          location: i.location_address || i.title || 'Unknown location',
+          municipality: i.municipalities?.name,
+          province: i.municipalities?.province,
+          eta: i.estimated_resolution_time
+            ? new Date(i.estimated_resolution_time).toLocaleString()
+            : null,
+          description: i.description,
+          coordinates:
+            i.location_lng && i.location_lat
+              ? [i.location_lng, i.location_lat]
+              : null,
+        }))
+        setAllIncidents(transformed)
+      }
+    }
+
+    fetchIncidents()
+    const channel = supabase
+      .channel('public:incidents')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'incidents' },
+        fetchIncidents
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // First: location-based filtering
   const nearbyIncidents = useMemo(() => {
@@ -104,7 +90,7 @@ export const MapView = () => {
       (incident) =>
         incident.municipality === municipality.name || incident.province === municipality.province,
     )
-  }, [municipality])
+  }, [municipality, allIncidents])
 
   // Then: type filter
   const incidents = useMemo(() => {
@@ -118,7 +104,7 @@ export const MapView = () => {
         return Droplets
       case 'electricity':
         return Zap
-      case 'roadworks':
+      case 'roads':
         return Construction
       default:
         return MapPin
@@ -131,7 +117,7 @@ export const MapView = () => {
         return 'text-status-water'
       case 'electricity':
         return 'text-status-electricity'
-      case 'roadworks':
+      case 'roads':
         return 'text-status-roadworks'
       default:
         return 'text-primary'
@@ -139,7 +125,7 @@ export const MapView = () => {
   }
 
 return (
-    <div className="flex-1 flex flex-col md:flex-row">
+    <div className="w-full h-[calc(100vh-4rem)] flex flex-col md:flex-row">
       {/* Map */}
       <div className="flex-1 relative">
         <InteractiveMap
@@ -236,10 +222,6 @@ return (
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {incident.description}
                         </p>
-                        <div className="flex items-center space-x-1 mt-2 text-xs text-muted-foreground">
-                          <Users className="w-3 h-3" />
-                          <span>{incident.affectedCount} affected</span>
-                        </div>
                       </div>
                     </div>
                   </Card>
