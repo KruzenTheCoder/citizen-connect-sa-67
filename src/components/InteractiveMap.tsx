@@ -71,9 +71,24 @@ export const InteractiveMap = ({ incidents, userLocation, onIncidentClick }: Int
       maxBounds: SA_BOUNDS,
       maxZoom: 15,
       minZoom: 4,
+      scrollZoom: true,
     })
     map.addControl(new mapboxgl.NavigationControl(), 'top-right')
-    map.on('load', () => setMapLoaded(true))
+
+    // Add geolocate control to prompt for user location and enable tracking
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true,
+    })
+    map.addControl(geolocate, 'top-right')
+
+    map.on('load', () => {
+      setMapLoaded(true)
+      // Automatically request location on load
+      geolocate.trigger()
+    })
+
     mapRef.current = map
   }
 
