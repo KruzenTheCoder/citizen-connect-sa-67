@@ -58,9 +58,9 @@ export const ServicesPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-civic-emerald to-civic-emerald/80 text-white px-4 py-8 safe-area-padding-top">
+      <div className="bg-gradient-to-r from-civic-emerald to-civic-emerald/80 text-white px-4 pt-12 pb-8 safe-area-padding-top">
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold mb-2">Local Services</h1>
           <p className="text-white/90">Access municipal services and emergency contacts</p>
